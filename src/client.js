@@ -1,6 +1,8 @@
 import { initQuote } from './quote-client.js';
+import { initHeroGallery } from './hero-gallery.js';
 import config from '../site.config.mjs';
 
+initHeroGallery();
 
 const $ = (s, p=document) => p.querySelector(s);
 const $$ = (s, p=document) => [...p.querySelectorAll(s)];

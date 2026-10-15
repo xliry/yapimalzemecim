@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { build } from 'esbuild';
 import sharp from 'sharp';
+import { createHash } from 'node:crypto';
+import { heroSlides, heroWidths } from '../src/hero-slides.mjs';
 import config from '../site.config.mjs';
 import { adminPage } from '../src/admin.mjs';
 import {products,articles,generalFaq} from '../src/content.mjs';
@@ -21,9 +23,20 @@ await Promise.all(names.map(async name=>{
 }));
 await sharp('public/assets/hero.png').resize({width:960}).webp({quality:77,effort:5}).toFile(`${dir}/assets/hero-960.webp`);
 await Promise.all([960,1536].map(width=>sharp('public/assets/hero.png').resize({width}).avif({quality:53,effort:5}).toFile(`${dir}/assets/hero${width===960?'-960':''}.avif`)));
-await sharp('public/assets/hero.png').resize(1200,630,{fit:'cover',position:'centre'}).jpeg({quality:85}).toFile(`${dir}/assets/social.jpg`);
+for (const slide of heroSlides) {
+ const source=`public/assets/${slide.name}.jpg`;
+ await Promise.all(heroWidths(slide).flatMap(width=>[
+  sharp(source).resize({width,withoutEnlargement:true}).avif({quality:49,effort:5}).toFile(`${dir}/assets/${slide.name}-${width}.avif`),
+  sharp(source).resize({width,withoutEnlargement:true}).webp({quality:80,effort:5}).toFile(`${dir}/assets/${slide.name}-${width}.webp`)
+ ]));
+ await fs.unlink(`${dir}/assets/${slide.name}.jpg`);
+}
+await sharp('public/assets/hero-truck.jpg').resize(1200,630,{fit:'cover',position:'centre'}).jpeg({quality:85}).toFile(`${dir}/assets/social.jpg`);
 await build({entryPoints:{site:'src/client.js',admin:'src/admin-client.js'},bundle:true,minify:true,format:'esm',target:['es2020'],outdir:`${dir}/assets`,entryNames:'[name]',chunkNames:'chunks/[name]-[hash]',splitting:true,define:{'process.env.SITE_ORIGIN':JSON.stringify(config.origin)}});
 await build({entryPoints:['src/style.css'],bundle:true,minify:true,outfile:`${dir}/assets/site.css`,external:['/assets/*']});
+// New markup must also fetch its matching CSS and JavaScript through browser caches.
+const versions=Object.fromEntries(await Promise.all(['site.css','site.js'].map(async file=>[file,createHash('sha256').update(await fs.readFile(`${dir}/assets/${file}`)).digest('hex').slice(0,12)])));
+const render=page=>layout(page).replace(/\/assets\/(site\.(?:css|js))"/g,(_,file)=>`/assets/${file}?v=${versions[file]}"`);
 const faqSchema=items=>({'@context':'https://schema.org','@type':'FAQPage',mainEntity:items.map(f=>({'@type':'Question',name:f.q,acceptedAnswer:{'@type':'Answer',text:f.a}}))});
 const crumbs=items=>({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{title:'Ana sayfa',url:'/'},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.title,item:config.origin+x.url}))});
 const pages=[
@@ -44,8 +57,8 @@ const productDescriptions={
 for(const p of products)pages.push({path:`/urunler/${p.slug}/`,title:`${p.title}: Özellikler ve Teklif Bilgileri | Yapı Malzemecim`,description:productDescriptions[p.slug],body:productPage(p),jsonld:[faqSchema(p.faq),crumbs([{title:'Ürünler',url:'/urunler/'},{title:p.title,url:`/urunler/${p.slug}/`}])]});
 for(const a of articles)pages.push({path:`/rehber/${a.slug}/`,title:`${a.title} | Yapı Malzemecim`,description:a.excerpt,body:articlePage(a),type:'Article',jsonld:[crumbs([{title:'Malzeme rehberi',url:'/rehber/'},{title:a.title,url:`/rehber/${a.slug}/`}]),{'@context':'https://schema.org','@type':'Article',headline:a.title,description:a.excerpt,datePublished:'2026-10-15',dateModified:'2026-10-15',author:{'@type':'Organization',name:config.name,url:config.origin},publisher:{'@id':config.origin+'/#organization'},mainEntityOfPage:config.origin+`/rehber/${a.slug}/`,image:config.origin+'/assets/social.jpg'},faqSchema(a.faq)]});
 const admin={path:'/yonetim/',title:'Talep Yönetimi | Yapı Malzemecim',description:'Yapı Malzemecim proje taleplerini yetkili erişimle inceleme ve görüşme durumu takip ekranı.',body:adminPage(),noindex:true};
-for(const page of [...pages,admin]){const file=path.join(dir,page.path,'index.html');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,layout(page));}
-await fs.writeFile(`${dir}/404.html`,layout({path:'/404.html',title:'Sayfa bulunamadı | Yapı Malzemecim',description:'Aradığınız sayfa bulunamadı. Yapı Malzemecim ürünlerine ve malzeme rehberlerine ana sayfadan ulaşabilirsiniz.',body:`<section class="wrap empty-page"><span class="eyebrow">404 / SAYFA BULUNAMADI</span><h1>Bu sayfa yerinde yok.</h1><p>Ürünlere ve rehberlere ana sayfadan devam edebilirsiniz.</p><a class="button" href="/">Ana sayfaya dönün ${arrow}</a></section>`,noindex:true}));
+for(const page of [...pages,admin]){const file=path.join(dir,page.path,'index.html');await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,render(page));}
+await fs.writeFile(`${dir}/404.html`,render({path:'/404.html',title:'Sayfa bulunamadı | Yapı Malzemecim',description:'Aradığınız sayfa bulunamadı. Yapı Malzemecim ürünlerine ve malzeme rehberlerine ana sayfadan ulaşabilirsiniz.',body:`<section class="wrap empty-page"><span class="eyebrow">404 / SAYFA BULUNAMADI</span><h1>Bu sayfa yerinde yok.</h1><p>Ürünlere ve rehberlere ana sayfadan devam edebilirsiniz.</p><a class="button" href="/">Ana sayfaya dönün ${arrow}</a></section>`,noindex:true}));
 await fs.writeFile(`${dir}/sitemap.xml`,`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages.map(p=>`\n<url><loc>${config.origin+p.path}</loc><lastmod>2026-10-15</lastmod></url>`).join('')}\n</urlset>`);
 await fs.writeFile(`${dir}/robots.txt`,`User-agent: *\nAllow: /\n\nSitemap: ${config.origin}/sitemap.xml\n`);
 const llms=`# Yapı Malzemecim\n\n> Plywood, kontrplak, OSB ve kereste hakkında Türkçe ürün ve uygulama bilgileri; yaklaşık levha hesabı ve malzeme talebi hazırlama aracı.\n\n## Önemli bağlam\n\n- Ürün ölçüleri genel talep örnekleridir; güncel stok, fiyat, sertifika veya teslimat garantisi değildir. Kesin bilgi gerçek ürün föyü ve teklifle doğrulanır.\n- OSB/3 neme dayanıklı kullanım sınıfıdır, su geçirmez değildir. Yapısal malzeme seçimi proje hesabına bağlıdır.\n- Marka ve ürün görselleri yapay zekâ ile üretilmiş temsilî görsellerdir.\n- Teklif formu ziyaretçinin açık gönderimiyle bir talep kaydı oluşturur. İletişim bilgileri ve talep kayıtları herkese açık değildir; yönetim ekranı ek yetkilendirme gerektirir.\n\n## Ürünler\n${products.map(p=>`- [${p.title}](${config.origin}/urunler/${p.slug}/): ${p.short}`).join('\n')}\n\n## Malzeme rehberleri\n${articles.map(a=>`- [${a.title}](${config.origin}/rehber/${a.slug}/): ${a.excerpt}`).join('\n')}\n\n## Kurumsal ve iletişim\n- [Yaklaşımımız](${config.origin}/hakkimizda/)\n- [Teklif hazırlama](${config.origin}/teklif/)\n- [İletişim](${config.origin}/iletisim/)\n- [Gizlilik](${config.origin}/gizlilik/)\n\n## Optional\n- [Tam içerik](${config.origin}/llms-full.txt)\n- [Site haritası](${config.origin}/sitemap.xml)\n`;
