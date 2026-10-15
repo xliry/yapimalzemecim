@@ -5,7 +5,7 @@ import lighthouse from 'lighthouse';
 import { chromium } from 'playwright';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const manifestPath = path.join(root, 'dist', 'site-manifest.json');
+const manifestPath = path.join(root, 'generated', 'ssg', 'site-manifest.json');
 const outputDir = path.join(root, 'output', 'lighthouse-seo');
 const base = process.env.SEO_ORIGIN || 'http://127.0.0.1:4173';
 const port = Number(process.env.SEO_DEBUG_PORT || 9230);
@@ -86,7 +86,7 @@ try {
 const failed = results.filter(result => result.status === 'failed');
 const summary = {
   startedAt, finishedAt: new Date().toISOString(), base, chromePort: port,
-  manifest: 'dist/site-manifest.json', category: 'seo', targetScore: 100,
+  manifest: 'generated/ssg/site-manifest.json', category: 'seo', targetScore: 100,
   status: !runErrors.length && results.length === targets.length && targets.length > 0 && failed.length === 0 ? 'passed' : 'failed',
   totals: { manifestIndexablePages: targets.length, auditedPages: results.length, passed: results.length - failed.length, failed: failed.length },
   minimumScore: results.length && results.every(result => result.score !== null) ? Math.min(...results.map(result => result.score)) : null,

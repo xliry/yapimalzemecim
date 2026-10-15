@@ -1,0 +1,16 @@
+.git
+node_modules
+dist
+generated
+output
+.sites-runtime
+.sites-checkout
+.wrangler
+.vinext
+.next
+.env*
+.dev.vars*
+*.sqlite*
+*.log
+*.tsbuildinfo
+data

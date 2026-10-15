@@ -1,32 +1,36 @@
 # Doğrulama — 15 Ekim 2026
 
-Özel önizleme için yerel `http://127.0.0.1:4173` üzerinde Chromium ve Lighthouse ile çalıştırıldı. Gerçek kullanıcı trafiği veya herkese açık alan adı ölçümü değildir.
+Hedef: https://yapimalzemecim.com.tr; telefon ve WhatsApp +90 544 330 80 46. GitHub/Coolify için Dockerfile ve Node.js24/SQLite çalışma yolu hazırlandı. Sites Vinext/D1 yolu da korunur.
 
-## Lighthouse
+## Lighthouse — standalone Node önizlemesi
+
+4176 portundaki üretim Node sunucusunda mobil 390×844 benzetimiyle çalıştırıldı. Gerçek internet alan adı veya Coolify sunucusu ölçümü değildir.
 
 | Sayfa | Performans | Erişilebilirlik | İyi uygulamalar | SEO |
 |---|---:|---:|---:|---:|
-| Ana sayfa | 91 | 100 | 100 | 100 |
-| Filmli plywood | 96 | 100 | 100 | 100 |
-| OSB/3 rehberi | 97 | 100 | 100 | 100 |
-| Teklif hazırlama | 98 | 100 | 100 | 100 |
+| Ana sayfa | 98 | 100 | 100 | 100 |
+| Filmli plywood | 99 | 100 | 100 | 100 |
+| OSB/3 rehberi | 100 | 100 | 100 | 100 |
+| Teklif | 100 | 100 | 100 | 100 |
 
-Mobil benzetimi: 390 × 844. Bu dört sayfada CLS 0, Total Blocking Time 0 ms. LCP sırasıyla 3,3 / 2,6 / 2,3 / 2,1 saniye. Performans cihaz, ağ ve barındırmaya göre değişir.
+Bu dört sayfada CLS0, TBT0ms; LCP sırasıyla 2,4 / 1,8 / 1,4 / 1,4 saniye. İlk istemci JavaScript paketi yaklaşık10KB; GSAP ihtiyaç olan sayfalarda ilk ekrandan sonra yüklenir.
 
-**İndekslenebilir 17 sayfanın tamamı ayrıca Lighthouse SEO denetiminden 100/100 aldı.** Ayrıntılı raporlar: `output/lighthouse-seo/summary.json`, sayfa başına JSON ve HTML. Bu puan arama sıralaması veya indeksleme garantisi değildir.
+**17/17 indekslenebilir sayfa ayrıca Lighthouse SEO100/100 aldı.** Bu teknik test puanıdır; sıralama veya indeksleme garantisi değildir.
 
-## İşlev ve responsive
+## İşlev ve veri
 
-- 18 HTML sayfası × mobil/masaüstü = 36 sayfa kontrolü.
-- 31 etkileşim testi: mobil menü/Escape, ürün filtreleri, hesaplayıcı, kalınlık etkileşimi, form parametreleri ve doğrulama, dosya indirme, gerçek clipboard ve izin reddi, çerez tercihleri, azaltılmış hareket tercihi.
-- Başarısız test, yatay taşma, kırık görsel, konsol hatası, istek hatası veya HTTP hatası: **0**.
-- 1543 statik kontrol: sayfa başlıkları, açıklamalar, tek H1, canonical, JSON-LD, tüm iç bağlantılar/fragmentler/görseller/fontlar, sitemap, robots ve LLM dosyaları. Hata: **0**.
-- Üretim bağımlılıkları için npm audit: **0 bilinen açık**. Geliştirme araçları dağıtım çıktısına dahil edilmez.
+- 19HTML × iki viewport: **38/38 sayfa kontrolü geçti**.
+- **33/33 UI etkileşimi** ve **3/3 regresyon** geçti. UI gönderim yanıtları stub edilir; veri kaydı ayrıca gerçek sunucuda sınanır.
+- **7/7 standalone Node/SQLite testi**: anonim form gönderimi, doğrulama, imza, idempotency, yönetim anahtarı, CSV/durum, hız sınırı, migration rollback, yeniden başlatmada kalıcılık, gzip/HEAD/yönlendirme/404, runtime SEO alan adı.
+- **7/7 Sites Worker/D1 API testi**: ayrı yerel runtime üzerinde gerçek kayıt ve ChatGPT+anahtar yetkilendirmesi.
+- Gerçek Node tarayıcı entegrasyonu: formdan talep kaydı, talep numarası, ChatGPT gerektirmeyen yönetim ekranında kaydın görünmesi geçti.
+- Statik SEO/bağlantı denetimi ve TypeScript kontrolü geçti. Konsol, istek, HTTP, taşma ve kırık görsel hatası yok.
+- Gizli anahtarlar ve yerel müşteri/test kayıtları Git ve Docker bağlamından dışlandı; içerik taramasıyla kontrol edildi.
 
-Raporlar `output/functional-qa.json`, `output/static-check.json`, `output/lighthouse/` ve `output/lighthouse-seo/` içinde saklanır. Yeniden üretme komutları README'dedir.
+Raporlar yerel output/ klasöründedir. Node ve API testleri yalnız loopback ve geçici/yerel veritabanına yazılır; bu kayıtlar üretime taşınmaz.
 
-## Kalan işletme girdileri
+## Dağıtım kapsamı
 
-Telefon/WhatsApp, ticari unvan, adres, gerçek hizmet bölgeleri, alan adı ve gerçek ürün/teslimat koşulları henüz sağlanmadı. Site özel inceleme sürümüdür. Mevcut form talep dosyası oluşturur; otomatik satış başvurusu göndermez. Gerçek iletişim bilgileri `site.config.mjs` içinde doldurulunca ilgili telefon/WhatsApp/e-posta bağlantıları etkinleşir.
+Docker imajı bu bilgisayarda çalıştırılmadı; Docker motoru açık değildi. Dockerfile'ın kullandığı frontend build ve aynı standalone Node sunucusunun işlevleri yerelde doğrulandı. Coolify, Dockerfile üzerinden3000portunda çalıştırmalı ve /app/data için kalıcıvolume kullanmalıdır. Tüm ayarlar COOLIFY.md içindedir.
 
-Takip kimlikleri tanımlı değildir; Google/Meta betikleri yüklenmez. Özet hazırlama olayı gerçek lead/satış dönüşümü olarak sunulmaz. Yapay zekâ görselleri temsilî olarak belirtilmiştir.
+Gerçek ticari unvan, adres, hizmet bölgeleri ve işletmeye özgü aydınlatma metni henüz sağlanmadı. Bunlar uydurulmadı. Site telefon/WhatsApp ve kalıcı talep formu üzerinden iletişim sağlar.

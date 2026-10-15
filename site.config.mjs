@@ -1,8 +1,8 @@
 export default {
   name: 'Yapı Malzemecim',
-  origin: process.env.SITE_ORIGIN || 'https://yapi-malzemecim.uoma361.chatgpt.site',
-  phone: '',
-  whatsapp: '',
+  origin: process.env.SITE_ORIGIN || 'https://yapimalzemecim.com.tr',
+  phone: '+905443308046',
+  whatsapp: '905443308046',
   email: '',
   address: '',
   serviceRegions: [],

@@ -5,7 +5,7 @@ import config from '../site.config.mjs';
 
 // Deterministic checks for the generated static site. This is not a ranking score.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const distRoot = path.join(root, 'dist');
+const distRoot = path.join(root, 'generated', 'ssg');
 const reportPath = path.join(root, 'output', 'static-check.json');
 const errors = [];
 const pages = [];
@@ -89,6 +89,9 @@ function checkReference(value, base, file, kind, options = {}) {
     if (options.sameOrigin) fail('WRONG_ORIGIN', file, `${kind}: ${origin} bekleniyor, bulundu: ${url.href}`);
     return null;
   }
+  // These routes are owned by the platform or implemented by the server.
+  if (['/signin-with-chatgpt','/signout-with-chatgpt'].includes(url.pathname)) return null;
+  if (url.pathname === '/api/quotes' && kind === 'form[action]') return null;
   const target = resolveTarget(url, file, kind);
   references.push({ file, kind, url: url.href, target });
   if (!target) { fail('MISSING_TARGET', file, `${kind}: hedef dosya bulunamadı: ${url.pathname}`); return null; }

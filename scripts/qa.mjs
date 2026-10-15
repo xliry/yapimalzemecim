@@ -11,10 +11,21 @@ const tests = [];
 const pageAudits = [];
 const runtime = { consoleErrors: [], consoleWarnings: [], pageErrors: [], failedRequests: [], httpErrors: [], requests: [] };
 const internalLinks = new Set();
+const hostedAuthLinks = new Set();
+const quoteFixture = { ok: true, reference: 'YM-TEST2345', id: '42f62ee6-c81e-43d8-b43e-9a1385c52b5d' };
 const viewports = [{ name: 'mobile', width: 390, height: 844 }, { name: 'desktop', width: 1440, height: 1000 }];
 let browser;
 
 function requireThat(condition, message) { if (!condition) throw new Error(message); }
+async function stubQuoteApi(context) {
+  const submissions = [];
+  await context.route('**/api/quote-token', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ token: 'qa-ui-token' }) }));
+  await context.route('**/api/quotes', route => {
+    submissions.push(route.request().postDataJSON());
+    return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(quoteFixture) });
+  });
+  return { submissions };
+}
 async function test(name, viewport, action) {
   const started = Date.now();
   try {
@@ -35,6 +46,8 @@ async function htmlRoutes(directory, prefix = '') {
 }
 function attachMonitoring(page, viewport) {
   page.on('console', message => {
+    const location = message.location().url || page.url();
+    if (/^Failed to load resource: the server responded with a status of 404/.test(message.text()) && new URL(location).pathname === '/404.html') return;
     const item = { viewport, page: page.url(), text: message.text() };
     if (message.type() === 'error') runtime.consoleErrors.push(item);
     if (message.type() === 'warning') runtime.consoleWarnings.push(item);
@@ -47,12 +60,14 @@ function attachMonitoring(page, viewport) {
     runtime.failedRequests.push({ viewport, page: page.url(), url: request.url(), error: request.failure()?.errorText });
   });
   page.on('response', response => {
+    if (response.status() === 404 && response.request().isNavigationRequest() && new URL(response.url()).pathname === '/404.html') return;
     if (response.status() >= 400) runtime.httpErrors.push({ viewport, page: page.url(), url: response.url(), status: response.status() });
   });
 }
 async function go(page, pathname) {
   const response = await page.goto(new URL(pathname, base).href, { waitUntil: 'networkidle', timeout: 25000 });
-  requireThat(response?.status() === 200, `${pathname}: HTTP ${response?.status()}`);
+  const expectedStatus = pathname === '/404.html' ? 404 : 200;
+  requireThat(response?.status() === expectedStatus, `${pathname}: HTTP ${response?.status()} (beklenen ${expectedStatus})`);
   await page.evaluate(() => document.fonts.ready);
 }
 async function overflow(page) {
@@ -87,10 +102,13 @@ async function auditPage(page, pathname, viewport) {
     }
     record.brokenImages = await page.locator('img').evaluateAll(images => images.filter(image => !image.complete || image.naturalWidth === 0).map(image => ({ src: image.currentSrc || image.src, complete: image.complete })));
     record.emptyLinks = await page.locator('a').evaluateAll(links => links.filter(link => link.hasAttribute('href') && !link.getAttribute('href').trim()).map(link => link.textContent.trim()));
-    const links = await page.locator('a[href]').evaluateAll(anchors => anchors.map(anchor => anchor.href));
+    // A fragment-only skip link on the intentional 404 page is not a broken route link.
+    const links = await page.locator('a[href]').evaluateAll(anchors => anchors.filter(anchor => !anchor.getAttribute('href').startsWith('#')).map(anchor => anchor.href));
     for (const href of links) {
       const url = new URL(href);
       if (url.origin === new URL(base).origin && /^https?:$/.test(url.protocol)) {
+        // These endpoints belong to the hosting provider, not the local Vinext app.
+        if (['/signin-with-chatgpt', '/signout-with-chatgpt', '/callback'].includes(url.pathname)) { hostedAuthLinks.add(url.href); continue; }
         url.hash = ''; url.search = '';
         internalLinks.add(url.href);
       }
@@ -105,7 +123,7 @@ async function auditPage(page, pathname, viewport) {
   record.durationMs = Date.now() - started;
   pageAudits.push(record);
 }
-async function interactions(context, viewport) {
+async function interactions(context, viewport, quoteApi) {
   const page = await context.newPage();
   attachMonitoring(page, `${viewport}-interactive`);
   await go(page, '/');
@@ -197,7 +215,7 @@ async function interactions(context, viewport) {
     }
   });
   let preview = '';
-  await test('quote-fill-submit-local-summary', viewport, async () => {
+  await test('quote-fill-submit-api-confirmation', viewport, async () => {
     await page.locator('#quote-form [name="name"]').fill('QA Test Kullanıcısı');
     await page.locator('#quote-form [name="company"]').fill('Yerel İşlev Testi');
     await page.locator('#quote-form [name="phone"]').fill('05550000000');
@@ -206,12 +224,30 @@ async function interactions(context, viewport) {
     await page.locator('#quote-form [name="city"]').fill('İstanbul');
     await page.locator('#quote-form [name="consent"]').check();
     const requestStart = runtime.requests.length;
+    const submissionStart = quoteApi.submissions.length;
     await page.locator('#quote-form button[type="submit"]').click();
     await page.locator('#quote-result').waitFor({ state: 'visible' });
     preview = await page.locator('#quote-preview').textContent();
     for (const value of ['QA Test Kullanıcısı', '21 mm', '36 adet', 'İstanbul', '1250x2500']) requireThat(preview.includes(value), `Özet alanı eksik: ${value}`);
-    requireThat(!runtime.requests.slice(requestStart).some(request => request.method === 'POST'), 'Özet oluşturulurken beklenmeyen POST isteği gönderildi');
+    requireThat(await page.locator('#quote-result h3').textContent() === 'Talebiniz alındı.', 'Sunucu onayı başarı mesajına yansımadı');
+    requireThat(preview.includes(quoteFixture.reference), 'Sunucunun talep numarası özete aktarılmadı');
+    requireThat((await page.locator('#quote-result-status').textContent()).includes(quoteFixture.reference), 'Talep numarası durum mesajında yok');
+    const posts = runtime.requests.slice(requestStart).filter(request => request.method === 'POST');
+    requireThat(posts.length === 1 && new URL(posts[0].url).pathname === '/api/quotes', 'Talep yalnızca teklif API uç noktasına bir kez gönderilmeli');
+    requireThat(quoteApi.submissions.length === submissionStart + 1, 'Stub teklif API çağrısı kaydedilmedi');
+    const payload = quoteApi.submissions.at(-1);
+    requireThat(payload.name === 'QA Test Kullanıcısı' && payload.product === 'plywood' && payload.quantity === 36 && payload.unit === 'adet' && payload.consent === true, 'Form verileri API isteğine doğru aktarılmadı');
+    requireThat(payload.token === 'qa-ui-token' && /^[0-9a-f-]{36}$/i.test(payload.requestId), 'İstek belirteci veya kimliği gönderilmedi');
     requireThat(await page.evaluate(() => window.dataLayer?.some(item => item.event === 'quote_prepared' && item.product === 'plywood')), 'Teklif hazırlama olayı bulunamadı');
+    requireThat(await page.evaluate(() => window.dataLayer?.some(item => item.event === 'quote_submitted' && item.product === 'plywood')), 'Başarılı gönderim olayı bulunamadı');
+    return { mockedApi: true, reference: quoteFixture.reference };
+  });
+  await test('quote-success-resubmit-does-not-duplicate', viewport, async () => {
+    const submissionStart = quoteApi.submissions.length;
+    await page.locator('#quote-form button[type="submit"]').click();
+    await page.waitForTimeout(120);
+    requireThat(quoteApi.submissions.length === submissionStart, 'Değiştirilmemiş başarılı talep ikinci kez gönderildi');
+    requireThat(await page.locator('#quote-result h3').textContent() === 'Talebiniz alındı.', 'Mevcut talep onayı korunmadı');
   });
   await test('quote-download-content', viewport, async () => {
     const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#download-quote').click()]);
@@ -256,17 +292,18 @@ async function interactions(context, viewport) {
 }
 
 try {
-  const routes = await htmlRoutes(path.join(root, 'dist'));
+  const routes = await htmlRoutes(path.join(root, 'generated', 'ssg'));
   browser = await chromium.launch({ executablePath, headless: true });
   for (const viewport of viewports) {
     const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1, isMobile: viewport.name === 'mobile', hasTouch: viewport.name === 'mobile', acceptDownloads: true });
+    const quoteApi = await stubQuoteApi(context);
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
     const page = await context.newPage();
     attachMonitoring(page, viewport.name);
     for (const route of routes) await auditPage(page, route, viewport.name);
     console.log(`${viewport.name}: ${routes.length} sayfa taraması tamamlandı.`);
     await page.close();
-    await interactions(context, viewport.name);
+    await interactions(context, viewport.name, quoteApi);
     console.log(`${viewport.name}: etkileşim testleri tamamlandı.`);
     await context.close();
   }
@@ -283,6 +320,7 @@ try {
   });
   await test('reduced-motion-functional-and-stable', 'mobile-reduced', async () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    await stubQuoteApi(context);
     const page = await context.newPage();
     attachMonitoring(page, 'mobile-reduced');
     try {
@@ -311,6 +349,7 @@ const failedPages = pageAudits.filter(page => page.status === 'failed').length;
 const runtimeFailures = runtime.consoleErrors.length + runtime.pageErrors.length + runtime.failedRequests.length + runtime.httpErrors.length;
 const report = {
   generatedAt: new Date().toISOString(), base, executablePath,
+  scope: { uiQuoteApi: 'Playwright route ile deterministik başarılı yanıt; gerçek API ve kalıcı kayıt scripts/test-api.mjs kapsamındadır.', hostedAuthLinksNotRequested: [...hostedAuthLinks] },
   status: failedTests || failedPages || runtimeFailures ? 'failed' : 'passed',
   summary: { pageViewportChecks: pageAudits.length, failedPages, interactionTests: tests.length, failedTests, consoleErrors: runtime.consoleErrors.length, consoleWarnings: runtime.consoleWarnings.length, pageErrors: runtime.pageErrors.length, failedRequests: runtime.failedRequests.length, httpErrors: runtime.httpErrors.length },
   pageAudits, tests, runtime,

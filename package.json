@@ -4,18 +4,50 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/serve.mjs",
-    "build": "node scripts/build.mjs",
+    "dev": "node scripts/run-framework.mjs dev --port 4173",
+    "build": "node scripts/build.mjs && node scripts/prepare-server.mjs && node scripts/run-framework.mjs build",
     "check": "node scripts/check.mjs",
-    "audit": "node scripts/audit.mjs"
+    "audit": "node scripts/audit.mjs",
+    "build:static": "node scripts/build.mjs",
+    "build:node": "node scripts/build.mjs && node scripts/build-node.mjs",
+    "start:node": "node generated/node-server.mjs",
+    "test:node": "node scripts/test-node.mjs",
+    "db:generate": "drizzle-kit generate",
+    "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0"
   },
   "dependencies": {
-    "gsap": "^3.13.0"
+    "gsap": "^3.13.0",
+    "next": "16.3.4",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "drizzle-orm": "0.45.2",
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.6.0"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0",
+    "esbuild": "0.28.2",
     "sharp": "^0.34.0",
     "lighthouse": "^12.8.0",
-    "playwright": "^1.56.0"
+    "playwright": "^1.56.0",
+    "@cloudflare/vite-plugin": "1.37.1",
+    "@cloudflare/workers-types": "4.20260515.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "drizzle-kit": "0.31.10",
+    "json-rpc-2.0": "1.7.1",
+    "raw-body": "3.0.2",
+    "react-server-dom-webpack": "19.2.6",
+    "typescript": "5.9.3",
+    "vinext": "1.0.0-beta.5",
+    "vite": "8.0.13",
+    "wrangler": "4.92.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "sharp": "0.35.4"
+    }
   }
 }
