@@ -9,14 +9,13 @@ export function initHeroGallery() {
   const status = hero.querySelector('[data-gallery-status]');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const pending = new Map();
-  let active = 0, serial = 0, timer, userPaused = false, hovered = false, focused = false, inView = false;
-  const canPlay = () => !motion.matches && !userPaused && !hovered && !focused && inView && !document.hidden;
+  let active = 0, serial = 0, timer, userPaused = motion.matches, inView = false;
+  const canPlay = () => !userPaused && inView && !document.hidden;
   const schedule = () => {
     clearTimeout(timer);
-    if (canPlay()) timer = setTimeout(() => show((active + 1) % slides.length, false), 7000);
+    if (canPlay()) timer = setTimeout(() => show((active + 1) % slides.length, false), 5000);
   };
   const syncPause = () => {
-    pause.hidden = motion.matches;
     pause.setAttribute('aria-label', userPaused ? 'Otomatik geçişleri başlat' : 'Otomatik geçişleri durdur');
     pause.setAttribute('aria-pressed', String(userPaused));
     pause.dataset.paused = String(userPaused);
@@ -31,8 +30,18 @@ export function initHeroGallery() {
         template.remove();
       }
       const image = slide.querySelector('img');
-      try { await image.decode(); return image.naturalWidth > 0; }
-      catch { pending.delete(index); return false; }
+      return new Promise(resolve => {
+        let settled = false;
+        const timeout = setTimeout(() => finish(false), 8000);
+        function finish(loaded) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeout);
+          if (!loaded) pending.delete(index);
+          resolve(loaded);
+        }
+        image.decode().then(() => finish(image.naturalWidth > 0), () => finish(false));
+      });
     })());
     return pending.get(index);
   };
@@ -40,13 +49,20 @@ export function initHeroGallery() {
     const request = ++serial;
     clearTimeout(timer);
     if (index === active) { schedule(); return; }
-    const loaded = await load(index);
-    if (request !== serial) return;
-    if (!loaded) {
-      if (manual) status.textContent = 'Görsel yüklenemedi. Başka bir kare seçebilirsiniz.';
-      schedule(); return;
+    let loaded = false;
+    for (let attempt = 0; attempt < slides.length - 1; attempt++) {
+      loaded = await load(index);
+      if (request !== serial) return;
+      if (!manual && !canPlay()) { schedule(); return; }
+      if (loaded) break;
+      if (manual) {
+        status.textContent = 'Görsel yüklenemedi. Başka bir kare seçebilirsiniz.';
+        schedule(); return;
+      }
+      index = (index + 1) % slides.length;
+      if (index === active) break;
     }
-    if (!manual && !canPlay()) { schedule(); return; }
+    if (!loaded) { schedule(); return; }
     active = index;
     slides.forEach((slide, i) => {
       slide.classList.toggle('is-active', i === active);
@@ -61,17 +77,26 @@ export function initHeroGallery() {
   controls.addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) || !event.target.matches('[data-gallery-select]')) return;
     event.preventDefault();
+    userPaused = true;
+    syncPause();
     const current = buttons.indexOf(event.target);
     const index = event.key === 'Home' ? 0 : event.key === 'End' ? slides.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + slides.length) % slides.length;
     buttons[index].focus(); show(index);
   });
   pause.addEventListener('click', () => { userPaused = !userPaused; syncPause(); });
-  hero.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') { hovered = true; schedule(); } });
-  hero.addEventListener('pointerleave', () => { hovered = false; schedule(); });
-  hero.addEventListener('focusin', () => { focused = true; schedule(); });
-  hero.addEventListener('focusout', () => queueMicrotask(() => { focused = hero.contains(document.activeElement); schedule(); }));
+  hero.addEventListener('focusin', event => {
+    // Keyboard navigation pauses rotation; pointer selection keeps the gallery playing.
+    if (event.target !== pause && event.target.matches(':focus-visible')) {
+      userPaused = true;
+      syncPause();
+    }
+  });
   document.addEventListener('visibilitychange', schedule);
-  motion.addEventListener('change', syncPause);
+  motion.addEventListener('change', () => {
+    // Reduced motion starts paused, with a visible Play control for explicit opt-in.
+    if (motion.matches) userPaused = true;
+    syncPause();
+  });
   new IntersectionObserver(entries => { inView = entries[0].intersectionRatio >= .25; schedule(); }, { threshold: .25 }).observe(hero);
   controls.hidden = false;
   syncPause();
