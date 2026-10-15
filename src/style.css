@@ -26,9 +26,7 @@
 .gallery-pause svg{width:18px;height:18px}
 .gallery-pause .play-symbol,.gallery-pause[data-paused=true] .pause-symbol{display:none}
 .gallery-pause[data-paused=true] .play-symbol{display:block}
-.gallery-note{color:#e0e1d6;font-size:9px;letter-spacing:.02em}
 .about-image picture{display:block}
-.about-image:has(picture)>span{background:rgba(34,45,37,.85);padding:4px 8px;border-radius:2px;font-size:9px;left:12px;bottom:12px}
 @media(max-width:1000px){.about-image picture img{height:auto}}
 .gallery-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(max-width:760px){
@@ -38,7 +36,6 @@
  .hero-gallery-panel{width:100%;align-items:flex-start;gap:0}
  .gallery-caption{font-size:10px;letter-spacing:.09em}
  .gallery-controls{margin-left:-12px}
- .gallery-note{font-size:10px;margin-top:2px}
  .hero-copy{padding-bottom:70px}
 }
 /* Readable supporting copy and accessible controls across viewport sizes. */
