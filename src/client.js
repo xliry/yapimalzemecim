@@ -1,5 +1,6 @@
 import { initQuote } from './quote-client.js';
 import { initHeroGallery } from './hero-gallery.js';
+import { initCatalog } from './catalog-client.js';
 import config from '../site.config.mjs';
 
 initHeroGallery();
@@ -51,13 +52,7 @@ $$('[data-filter]').forEach(button=>button.addEventListener('click',()=>{
  window.dispatchEvent(new Event('ym:layout'));
 }));
 
-$$('[data-thickness]').forEach(button=>button.addEventListener('click',()=>{
- $$('[data-thickness]').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',String(b===button));});
- $('#thickness-copy').textContent=`${button.dataset.thickness} mm — Proje hesabına göre seçim`;
- const image=$('.lab-visual>img');
- if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){image.animate([{transform:'scale(1)'},{transform:'scale(1.025)'},{transform:'scale(1)'}],{duration:600,easing:'ease-out'});}
- track('material_explore',{thickness:button.dataset.thickness});
-}));
+initCatalog({track});
 
 const calc=$('#calculator');
 if(calc){

@@ -108,7 +108,7 @@ export function quoteFields(data: Record<string, unknown>) {
   const quantity = typeof data.quantity === 'number' || typeof data.quantity === 'string' ? Number(data.quantity) : NaN;
   const digits = phone.replace(/\D/g, '');
   if (name.length < 2 || !/^[+\d\s().-]+$/.test(phone) || digits.length < 10 || digits.length > 15 || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) throw new ApiError(400, 'Adınızı, telefonunuzu ve e-postanızı kontrol edin.');
-  if (!['plywood', 'kontrplak', 'osb', 'kereste', 'diger'].includes(product) || !['adet', 'm²', 'm³', 'metre'].includes(unit) || !Number.isFinite(quantity) || quantity < 0.01 || quantity > 1000000) throw new ApiError(400, 'Ürün, miktar ve birim bilgilerini kontrol edin.');
+  if (!['plywood', 'kontrplak', 'osb', 'kereste', 'ahsap-kalip-kirisi', 'diger'].includes(product) || !['adet', 'm²', 'm³', 'metre'].includes(unit) || !Number.isFinite(quantity) || quantity < 0.01 || quantity > 1000000) throw new ApiError(400, 'Ürün, miktar ve birim bilgilerini kontrol edin.');
   return { requestId: data.requestId, name, company, phone, email, product, thickness, quantity, unit, city, details };
 }
 export async function requireAdmin(request: Request) {

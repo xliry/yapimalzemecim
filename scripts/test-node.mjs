@@ -56,11 +56,13 @@ try {
     const invalidPath = await new Promise((resolve, reject) => { const request = http.get(base, { path: '/\\evil.invalid/api/health' }, response => { response.resume(); resolve(response.statusCode); }); request.on('error', reject); });
     assert.equal(invalidPath, 400);
   });
-  await test('shared API records a real anonymous lead without ChatGPT authentication', async () => {
+  await test('shared API records a new timber beam product and rejects unknown products', async () => {
     ({ token } = await (await fetch(base + '/api/quote-token')).json());
-    fixture = { token, requestId: crypto.randomUUID(), name: 'Yerel Node testi', company: 'TEST', phone: '+90 000 000 00 00', email: 'qa@example.invalid', product: 'plywood', thickness: '18 mm', quantity: 12, unit: 'adet', city: 'Test', details: '=1+1', consent: true, website: '' };
+    fixture = { token, requestId: crypto.randomUUID(), name: 'Yerel Node testi', company: 'TEST', phone: '+90 000 000 00 00', email: 'qa@example.invalid', product: 'ahsap-kalip-kirisi', thickness: '2,90 m', quantity: 12, unit: 'adet', city: 'Test', details: '=1+1', consent: true, website: '' };
     assert.equal((await submit(fixture, { Origin: 'https://other.invalid' })).status, 403);
     assert.equal((await submit({ ...fixture, details: 'x'.repeat(15000) })).status, 413);
+    const unknownProduct = await submit({ ...fixture, product: 'unknown-product', requestId: crypto.randomUUID() });
+    assert.equal(unknownProduct.status, 400); assert.equal((await unknownProduct.json()).ok, false);
     const created = await submit(fixture); assert.equal(created.status, 201); saved = await created.json(); assert.equal(saved.ok, true);
     assert.deepEqual(await (await submit(fixture)).json(), saved);
     assert.equal((await submit({ ...fixture, quantity: 13 })).status, 409);
@@ -70,9 +72,11 @@ try {
     assert.equal((await fetch(base + '/api/admin/quotes')).status, 401);
     assert.equal((await fetch(base + '/api/admin/quotes', { headers: { Authorization: 'Bearer wrong' } })).status, 403);
     const response = await fetch(base + '/api/admin/quotes', { headers: auth() }); assert.equal(response.status, 200);
-    assert.equal((await response.json()).quotes.find(row => row.id === saved.id).name, fixture.name);
+    const stored = (await response.json()).quotes.find(row => row.id === saved.id);
+    assert.equal(stored.name, fixture.name); assert.equal(stored.product, 'ahsap-kalip-kirisi'); assert.equal(stored.thickness, fixture.thickness); assert.equal(stored.quantity, fixture.quantity); assert.equal(stored.unit, fixture.unit);
     const patch = await fetch(base + `/api/admin/quotes/${saved.id}`, { method: 'PATCH', headers: { ...auth(), Origin: externalOrigin, 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'quoted' }) }); assert.equal(patch.status, 200);
-    const exported = await fetch(base + '/api/admin/export', { headers: auth() }); assert.equal(exported.status, 200); assert.ok((await exported.text()).includes('"\'=1+1"'));
+    const exported = await fetch(base + '/api/admin/export', { headers: auth() }); assert.equal(exported.status, 200);
+    const csv = await exported.text(); assert.ok(csv.includes('"\'=1+1"')); assert.ok(csv.includes('"ahsap-kalip-kirisi","2,90 m","12","adet"'));
   });
   await test('untrusted forwarded and Cloudflare IP headers cannot bypass the rate limit', async () => {
     for (let index = 0; index < 4; index++) assert.equal((await submit({ ...fixture, requestId: crypto.randomUUID() })).status, 201);
@@ -82,7 +86,8 @@ try {
   await stop(); await start('https://coolify.example.test');
   await test('restart preserves SQLite leads and runtime origin rewrites SEO files', async () => {
     const response = await fetch(base + '/api/admin/quotes', { headers: auth() }); const data = await response.json();
-    assert.equal(data.quotes.length, 5); assert.equal(data.quotes.find(row => row.id === saved.id).status, 'quoted');
+    assert.equal(data.quotes.length, 5);
+    const restored = data.quotes.find(row => row.id === saved.id); assert.equal(restored.status, 'quoted'); assert.equal(restored.product, 'ahsap-kalip-kirisi');
     assert.deepEqual(await (await submit(fixture)).json(), saved);
     for (const file of ['/', '/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt']) {
       const response = await fetch(base + file); assert.equal(response.status, 200); const text = await response.text(); assert.ok(text.includes('https://coolify.example.test')); assert.ok(!text.includes('https://yapi-malzemecim.uoma361.chatgpt.site'));

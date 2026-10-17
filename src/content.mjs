@@ -2,9 +2,12 @@ export const products = [
   {
     slug: 'plywood',
     title: 'Filmli Plywood',
+    group: 'kalip',
+    seoDescription: 'Filmli plywood için ebat, kalınlık ve kullanım alanınıza göre teklif alın. Paket ve şantiye fotoğraflarını inceleyin; miktar ve teslimat planınızı paylaşın.',
     short: 'Beton kalıbının yüzeyi. Projenizin doğru başlangıcı.',
     tag: 'KALIP & ŞANTİYE',
-    image: 'plywood-film',
+    image: 'filmli-plywood-paketleri',
+    gallery: ['filmli-plywood-paketleri', 'plywood-santiye'],
     description: 'Filmli plywood, ahşap kaplama katmanlarından oluşan kontrplağın yüzeyinin fenolik filmle kaplandığı levha grubudur. Beton kalıp işlerinde yüzey kalitesi, gövde yapısı ve kullanım koşulları birlikte değerlendirilir. Kalınlık, ebat ve miktar bilgilerinizi paylaşarak projenize yönelik teklif talebi oluşturabilirsiniz.',
     specs: [
       { label: 'Kalınlık', value: '18 / 21 mm' },
@@ -23,9 +26,12 @@ export const products = [
   {
     slug: 'kontrplak',
     title: 'Ham Kontrplak',
+    group: 'panel',
+    seoDescription: 'Ham kontrplak yüzeyini, katmanlarını ve levha istifini fotoğraflarla inceleyin. Mobilya ve üretim ihtiyaçlarınız için ölçü ve miktara göre teklif alın.',
     short: 'Doğal yüzey, katmanlı yapı, çok yönlü üretim.',
     tag: 'MOBİLYA & ÜRETİM',
-    image: 'plywood-birch',
+    image: 'kontrplak-dogal-yuzey',
+    gallery: ['kontrplak-dogal-yuzey', 'kontrplak-yuzey-kenar', 'kontrplak-katman', 'kontrplak-istif'],
     description: 'Ham kontrplak; mobilya, ambalaj, iç mekân ve çeşitli endüstriyel uygulamalarda kullanılan çok katmanlı ahşap levha grubudur. Görünecek yüzeyin beklentisi, işleme yöntemi ve çalışma ortamı ürün seçiminde belirleyicidir. Huş ve kavak gibi farklı gövdeler aynı iş için eşdeğer kabul edilmemelidir.',
     specs: [
       { label: 'Kalınlık', value: '6 / 9 / 12 / 15 / 18 mm' },
@@ -44,20 +50,23 @@ export const products = [
   {
     slug: 'osb',
     title: 'OSB Levha',
+    group: 'panel',
+    seoDescription: 'OSB levha paketlerini inceleyin; kullanım alanı, teknik sınıf, kalınlık ve ebada göre talebinizi hazırlayın. Miktar ve teslimat şehrinizle teklif alın.',
     short: 'Çatıdan ambalaja, ihtiyaca göre panel seçimi.',
     tag: 'ÇATI & AHŞAP YAPI',
-    image: 'osb',
-    description: 'OSB, yönlendirilmiş ahşap yongalarının bağlayıcıyla preslenmesiyle üretilen levha grubudur. Çatı, duvar, döşeme ve ambalaj gibi uygulamalarda ürün sınıfı, destek düzeni ve çalışma koşulları birlikte ele alınır. OSB/3 neme dayanıklı sınıftır; sürekli suya maruz kalmaya uygun, su geçirmez bir levha anlamına gelmez.',
+    image: 'setboard-osb-paketleri',
+    gallery: ['setboard-osb-paketleri', 'setboard-osb-detay'],
+    description: 'OSB, yönlendirilmiş ahşap yongalarının bağlayıcıyla preslenmesiyle üretilen levha grubudur. Çatı, duvar, döşeme ve ambalaj gibi uygulamalarda ürün sınıfı, destek düzeni ve çalışma koşulları birlikte ele alınır. Paket üzerindeki ürün adı ve teknik sınıf, uygulamanın gerektirdiği koşullarla eşleştirilerek doğru levha seçilir.',
     specs: [
-      { label: 'Ürün sınıfı', value: 'OSB/3' },
+      { label: 'Ürün sınıfı', value: 'Etiket ve teknik föye göre' },
       { label: 'Kalınlık', value: '9 / 11 / 15 / 18 mm' },
       { label: 'Ebat', value: '1220 × 2440 / 1250 × 2500 mm' },
       { label: 'Kenar seçimi', value: 'Düz veya geçmeli; ürüne bağlı' },
     ],
     uses: ['Projesine uygun çatı altlığı', 'Duvar ve döşeme panel uygulamaları', 'Ambalaj, sandık ve atölye üretimleri'],
-    notes: ['Ölçü ve kalınlık seçiminizi uygulama alanınızla birlikte paylaşarak güncel temin bilgisi alabilirsiniz.', 'OSB/3 su geçirmez değildir. Depolama ve uygulama sırasında doğrudan sudan korunmalıdır.', 'Taşıyıcı uygulamalar için kalınlık, levha yönü, bağlantılar ve destek aralıkları proje ve üretici kılavuzuyla belirlenir.'],
+    notes: ['İstenen ürün sınıfını, ölçü ve kalınlığı uygulama alanınızla birlikte paylaşarak güncel temin bilgisi alabilirsiniz.', 'Paket üzerindeki ürün adını teknik sınıftan ayrı okuyun. Nemli koşullara uygunluk ve suya karşı koruma, ilgili ürünün teknik föyüyle değerlendirilir.', 'Taşıyıcı uygulamalar için kalınlık, levha yönü, bağlantılar ve destek aralıkları proje ve üretici kılavuzuyla belirlenir.'],
     faq: [
-      { q: 'OSB/3 yağmur altında kullanılabilir mi?', a: 'OSB/3 neme dayanıklı bir ürün sınıfıdır; su geçirmez değildir. Sürekli açık hava veya su etkisi için tek başına yeterli kabul edilmemeli, koruma ve uygulama sistemi ürün kılavuzuna göre çözülmelidir.' },
+      { q: 'OSB STANDARD ifadesi OSB/3 anlamına gelir mi?', a: 'Ürün adı tek başına OSB/3 sınıfını doğrulamaz. Sipariş öncesinde paket etiketi, ürün kodu ve üreticinin teknik föyü üzerinden sınıfı kontrol edin; projede istenen sınıfı teklif talebine açıkça yazın.' },
       { q: 'Çatı için hangi kalınlık gerekir?', a: 'Her çatı için geçerli tek kalınlık yoktur. Açıklık, yükler, levha yönü, bağlantılar ve kaplama sistemi projeye göre değerlendirilir.' },
       { q: 'Hesapta hangi levha ölçüsü kullanılmalı?', a: 'Teklif edilen gerçek levha ebadı kullanılmalı. 1220 × 2440 mm ile 1250 × 2500 mm aynı alanı kaplamaz; siparişte ölçüyü açık yazın.' },
     ],
@@ -65,9 +74,12 @@ export const products = [
   {
     slug: 'kereste',
     title: 'İnşaatlık Kereste',
+    group: 'kereste',
+    seoDescription: 'İnşaatlık kereste istiflerini, kesit ve ölçüm detaylarını inceleyin. Kalıplık tahta, kalas ve çıta ihtiyaçlarınız için boy ve adet listenizle teklif alın.',
     short: 'Kesiti, boyu ve kullanım amacı belli bir tedarik.',
     tag: 'ŞANTİYE & İMALAT',
-    image: 'timber',
+    image: 'kereste-istifi',
+    gallery: ['kereste-istifi', 'kereste-tahta-istifi', 'kereste-kesit', 'kereste-olcum', 'kereste-sevkiyat'],
     description: 'Kereste siparişinde yalnızca ağaç adı yeterli değildir. Kesit, boy, miktar, kullanım amacı, kuruluk ve yüzey beklentisi birlikte tanımlanır. Kalıplık tahta, çıta, moralye ve farklı kesitlerdeki talepler için ihtiyacınızı ölçülü bir listeyle paylaşabilirsiniz.',
     specs: [
       { label: 'Kesit', value: '5 × 10 / 10 × 10 cm' },
@@ -81,6 +93,30 @@ export const products = [
       { q: 'Kereste miktarı nasıl belirtilir?', a: 'Her kesit ve boy için adet yazabilir ya da toplam m³ paylaşabilirsiniz. En güvenilir karşılaştırma, kesit × boy × adet dökümü üzerinden yapılır.' },
       { q: 'Silinmiş kerestede ölçü değişir mi?', a: 'İşleme sonrası net ölçü ile nominal sipariş ölçüsü farklı olabilir. Teklifte hangi ölçünün esas alındığını, yüzey işlemini ve kabul edilen toleransı açıkça belirtin.' },
       { q: 'Kuru kereste her işe uygun mudur?', a: 'Uygun nem seviyesi kullanım yerine ve üretim sürecine bağlıdır. İç mekân doğraması, ambalaj ve yapı uygulamaları aynı koşullara sahip değildir.' },
+    ],
+  },
+  {
+    slug: 'ahsap-kalip-kirisi',
+    title: 'Ahşap Kalıp Kirişi',
+    group: 'kalip',
+    seoDescription: 'Ahşap kalıp kirişi istif ve uygulama fotoğraflarını inceleyin. Döşeme ve perde kalıbı ihtiyaçlarınız için boy, adet ve sistem bilgisiyle teklif alın.',
+    short: 'Kalıp sisteminiz için doğru boy, açık ürün tanımı.',
+    tag: 'KALIP & TAŞIYICI SİSTEM',
+    image: 'ahsap-kalip-kirisi-istifi',
+    gallery: ['ahsap-kalip-kirisi-istifi', 'kalip-kirisi-uygulama'],
+    description: 'Ahşap kalıp kirişleri, döşeme ve perde kalıplarında kullanılan kalıp sistemlerinin bileşenleridir. Kiriş seçimi; kullanılan sistem, gerekli boylar, destek düzeni ve ürüne ait teknik değerlerle birlikte yapılır. Kalıp projenizi veya boy bazında adet listenizi paylaşarak ihtiyacınıza yönelik teklif talebi oluşturabilirsiniz.',
+    specs: [
+      { label: 'Ürün grubu', value: 'Ahşap kalıp kirişi' },
+      { label: 'Boy seçimi', value: 'Proje ve ürün koduna göre' },
+      { label: 'Talep birimi', value: 'Her boy için adet' },
+      { label: 'Teknik kontrol', value: 'Kesit, taşıma değerleri ve sistem uyumu' },
+    ],
+    uses: ['Projesine uygun döşeme kalıp sistemleri', 'Ahşap kirişli perde kalıp sistemleri', 'Mevcut kalıp sistemi için ilave kiriş talepleri'],
+    notes: ['İhtiyaç duyulan her boyu adet bilgisiyle ayrı satırda paylaşın; mevcut sistemin marka ve modelini biliyorsanız talebe ekleyin.', 'Kiriş aralığı ve taşıma kapasitesi, teklif edilen ürünün teknik verileri ile kalıp projesine göre değerlendirilir.', 'Teslimatta ürün kodu ve boy listesini siparişle eşleştirin. Kullanım, kontrol ve depolamada ilgili üreticinin uygulama talimatlarını izleyin.'],
+    faq: [
+      { q: 'H20 kalıp kirişi talebinde hangi bilgiler gerekir?', a: 'H20 adıyla talep oluştururken istenen üretici veya ürün kodunu, boyları, her boy için adedi ve kullanılacak kalıp sistemini belirtin. Sistem veya model henüz belirlenmediyse proje bilgilerini paylaşarak ürün tanımını teklif aşamasında netleştirebilirsiniz.' },
+      { q: 'Ahşap kalıp kirişi ile kereste aynı ürün müdür?', a: 'Kalıp kirişi, belirli bir kalıp sisteminde teknik değerleriyle değerlendirilen bir bileşendir. Kesilmiş kereste, yalnız benzer boy veya görünüşe sahip olduğu için bu bileşenle eşdeğer kabul edilmez. Kullanılacak ürün kalıp projesiyle birlikte seçilir.' },
+      { q: 'Farklı kirişler aynı kalıp sisteminde birlikte kullanılabilir mi?', a: 'Ürünlerin boyu, kesiti, bağlantı ayrıntıları ve teknik değerleri sistem kapsamında kontrol edilmelidir. Alternatif ürün talebinde mevcut kirişin ürün kodunu veya teknik föyünü paylaşın; sistem uyumunu proje ve üretici bilgileriyle değerlendirin.' },
     ],
   },
 ];
@@ -241,7 +277,7 @@ export const articles = [
 ];
 
 export const generalFaq = [
-  { q: 'Teklif talebi için hangi bilgileri hazırlamalıyım?', a: 'Ürün grubu, kullanım alanı, ebat veya kesit, kalınlık, miktar ve teslimat şehri iyi bir başlangıçtır. Bilmediğiniz alanları not düşerek talep oluşturabilirsiniz.' },
+  { q: 'Teklif talebi için hangi bilgileri hazırlamalıyım?', a: 'Ürün grubu, kullanım alanı, ebat veya kesit, boy, kalınlık, miktar ve teslimat şehri iyi bir başlangıçtır. Kalıp kirişi için her boyun adedini ayrı belirtin. Bilmediğiniz alanları not düşerek talep oluşturabilirsiniz.' },
   { q: 'Güncel stok ve ölçü bilgisine nasıl ulaşabilirim?', a: 'İhtiyacınız olan ürün, ölçü ve miktarı teklif formundan paylaşabilir veya bizi arayabilirsiniz. Güncel stok, teknik özellik ve teslimat seçeneklerini talebiniz üzerinden netleştirelim.' },
   { q: 'Neden sabit fiyat listesi bulunmuyor?', a: 'Ürün tanımı, ebat, miktar ve teslimat kapsamı aynı olmadan fiyatları karşılaştırmak güçtür. Güncel teklif, talebinizdeki ürün ve teslimat bilgilerine göre hazırlanmalıdır.' },
   { q: 'Kaç levha gerektiğini nasıl hesaplarım?', a: 'Net alanı, seçtiğiniz levhanın metre cinsinden en × boy alanına bölün; belirlediğiniz fire varsayımını ekleyip sonucu tam levhaya yukarı yuvarlayın. Kesim planı ayrıca kontrol edilmelidir.' },

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { products } from '../src/content.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const base = process.env.QA_ORIGIN || 'http://127.0.0.1:4173';
@@ -100,7 +101,8 @@ async function auditPage(page, pathname, viewport) {
       const result = await overflow(page);
       if (result.overflow > 1) record.overflow.push({ position: Math.round(position), ...result });
     }
-    record.brokenImages = await page.locator('img').evaluateAll(images => images.filter(image => !image.complete || image.naturalWidth === 0).map(image => ({ src: image.currentSrc || image.src, complete: image.complete })));
+    // Hidden gallery frames may deliberately defer their image request until selected.
+    record.brokenImages = await page.locator('img').evaluateAll(images => images.filter(image => image.getClientRects().length > 0 && (!image.complete || image.naturalWidth === 0)).map(image => ({ src: image.currentSrc || image.src, complete: image.complete })));
     record.emptyLinks = await page.locator('a').evaluateAll(links => links.filter(link => link.hasAttribute('href') && !link.getAttribute('href').trim()).map(link => link.textContent.trim()));
     // A fragment-only skip link on the intentional 404 page is not a broken route link.
     const links = await page.locator('a[href]').evaluateAll(anchors => anchors.filter(anchor => !anchor.getAttribute('href').startsWith('#')).map(anchor => anchor.href));
@@ -153,7 +155,10 @@ async function interactions(context, viewport, quoteApi) {
   await test('product-filters', viewport, async () => {
     await go(page, '/urunler/');
     const result = {};
-    for (const [filter, expected] of [['kalip', 1], ['panel', 2], ['yapi', 1], ['all', 4]]) {
+    requireThat(await page.locator('.product-card').count() === products.length, 'Ürün kartları ürün kataloğuyla aynı sayıda değil');
+    const filters = [...new Set(products.map(product => product.group)), 'all'];
+    for (const filter of filters) {
+      const expected = filter === 'all' ? products.length : products.filter(product => product.group === filter).length;
       const button = page.locator(`[data-filter="${filter}"]`);
       await button.click();
       const count = await page.locator('.product-card:visible').count();
@@ -185,13 +190,28 @@ async function interactions(context, viewport, quoteApi) {
     await page.locator('#calculator [name="area"]').fill('100');
     await page.locator('#calculator [name="size"]').selectOption('3.125');
   });
-  await test('material-21mm-control', viewport, async () => {
-    await page.locator('[data-thickness="21"]').click();
-    requireThat((await page.locator('#thickness-copy').textContent()).startsWith('21 mm'), '21 mm metni güncellenmedi');
-    requireThat(await page.locator('[data-thickness="21"]').getAttribute('aria-pressed') === 'true', '21 mm aria-pressed güncellenmedi');
-    requireThat(await page.locator('[data-thickness="18"]').getAttribute('aria-pressed') === 'false', '18 mm seçimi temizlenmedi');
-    const tracked = await page.evaluate(() => window.dataLayer?.some(item => item.event === 'material_explore' && item.thickness === '21'));
+  await test('material-layer-and-surface-control', viewport, async () => {
+    const captions = {};
+    for (const view of ['yuzey', 'katman']) {
+      const other = view === 'yuzey' ? 'katman' : 'yuzey';
+      const button = page.locator(`[data-material-select="${view}"]`);
+      await button.click();
+      requireThat(await button.getAttribute('aria-pressed') === 'true', `${view}: seçili düğmenin aria-pressed durumu güncellenmedi`);
+      requireThat(await page.locator(`[data-material-select="${other}"]`).getAttribute('aria-pressed') === 'false', `${view}: önceki seçim temizlenmedi`);
+      const frame = page.locator(`[data-material-frame="${view}"]`);
+      requireThat(await frame.isVisible(), `${view}: seçilen fotoğraf görünmüyor`);
+      requireThat(!await page.locator(`[data-material-frame="${other}"]`).isVisible(), `${view}: diğer fotoğraf gizlenmedi`);
+      await page.waitForFunction(selected => {
+        const image = document.querySelector(`[data-material-frame="${selected}"] img`);
+        return image?.complete && image.naturalWidth > 0;
+      }, view);
+      captions[view] = (await page.locator('[data-material-caption]').textContent()).trim();
+      requireThat(captions[view].length > 0, `${view}: fotoğraf açıklaması boş`);
+    }
+    requireThat(captions.yuzey !== captions.katman, 'Katman ve yüzey açıklamaları değişmiyor');
+    const tracked = await page.evaluate(() => window.dataLayer?.some(item => item.event === 'material_explore'));
     requireThat(tracked, 'Malzeme etkileşimi dataLayer olayına yansımadı');
+    return { captions };
   });
   await test('quote-url-parameters', viewport, async () => {
     await go(page, '/teklif/?urun=plywood&miktar=36&birim=adet&ebat=1250x2500');
@@ -330,9 +350,11 @@ try {
       await page.waitForTimeout(500);
       const after = await page.locator('.hero-photo,.hero-aura,.hero h1>span').evaluateAll(elements => elements.map(element => getComputedStyle(element).transform));
       requireThat(before.every(value => value === 'none') && after.every(value => value === 'none'), 'Azaltılmış harekette hero hareketi var');
-      await page.locator('[data-thickness="21"]').click();
-      requireThat((await page.locator('#thickness-copy').textContent()).startsWith('21 mm'), 'Azaltılmış harekette kalınlık kontrolü çalışmıyor');
-      requireThat(await page.locator('.lab-visual>img').evaluate(image => getComputedStyle(image).transform) === 'none', 'Azaltılmış harekette numune görseli animasyonu çalışıyor');
+      await page.locator('[data-material-select="yuzey"]').click();
+      requireThat(await page.locator('[data-material-frame="yuzey"]').isVisible(), 'Azaltılmış harekette yüzey fotoğrafı seçilemiyor');
+      requireThat(await page.locator('[data-material-select="yuzey"]').getAttribute('aria-pressed') === 'true', 'Azaltılmış harekette yüzey kontrolü seçili değil');
+      requireThat((await page.locator('[data-material-caption]').textContent()).trim().length > 0, 'Azaltılmış harekette fotoğraf açıklaması boş');
+      requireThat(await page.locator('[data-material-frame="yuzey"] img').evaluate(image => getComputedStyle(image).transform) === 'none', 'Azaltılmış harekette numune görseli animasyonu çalışıyor');
       requireThat(await page.locator('#calc-output strong').textContent() === '36', 'Azaltılmış harekette hesaplayıcı çalışmıyor');
       requireThat((await overflow(page)).overflow <= 1, 'Azaltılmış harekette yatay taşma var');
       return { preference: 'reduce', heroTransforms: after };
