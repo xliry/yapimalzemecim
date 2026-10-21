@@ -10,12 +10,18 @@ export function catalogPhoto(name, { eager = false, sizes = '(max-width:760px) c
   const widths = thumbnail ? [photoWidths(name)[0]] : photoWidths(name);
   const srcset = format => widths.map(width => `/assets/${name}-${width}.${format} ${width}w`).join(', ');
   const position = card ? media.cardPosition : media.position;
-  return `<picture><source type="image/avif" srcset="${srcset('avif')}" sizes="${sizes}"><img src="/assets/${name}-${widths.at(-1)}.webp" srcset="${srcset('webp')}" sizes="${sizes}" alt="${esc(media.alt)}" width="${media.width}" height="${media.height}" style="object-position:${position}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></picture>`;
+  return `<picture><source type="image/avif" srcset="${srcset('avif')}" sizes="${sizes}"><img src="/assets/${name}-${widths.at(-1)}.webp" srcset="${srcset('webp')}" sizes="${sizes}" alt="${esc(media.alt)}" width="${media.width}" height="${media.height}" style="object-position:${position};${media.fit?`object-fit:${media.fit};background:#fff;`:``}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></picture>`;
 }
 
 export function productFilters(products) {
-  const groups = [['all', 'Tüm ürünler'], ['kalip', 'Kalıp çözümleri'], ['panel', 'Ahşap paneller'], ['kereste', 'Kereste']];
+  const groups = [['all', 'Tüm ürünler'], ['kalip', 'Kalıp çözümleri'], ['panel', 'Ahşap paneller'], ['kereste', 'Kereste'], ['duvar', 'Duvar malzemeleri'], ['cati', 'Çatı ürünleri']];
   return `<div class="product-filters" aria-label="Ürünleri filtrele">${groups.map(([group, title], index) => `<button class="${index === 0 ? 'active' : ''}" data-filter="${group}" aria-pressed="${index === 0}">${title} <span>${String(group === 'all' ? products.length : products.filter(p => p.group === group).length).padStart(2, '0')}</span></button>`).join('')}</div>`;
+}
+
+export function productChoices(product, products) {
+ const options=product.options||[];
+ const related=products.filter(p=>(product.relatedProducts||[]).includes(p.slug));
+ return `${options.length?`<div class="product-choices"><h2>Ürün seçeneğinizi belirleyin</h2><div>${options.map(option=>`<a href="/teklif/?urun=${product.slug}&secenek=${encodeURIComponent(option)}">${esc(option)} <span aria-hidden="true">↗</span></a>`).join('')}</div></div>`:''}${related.length?`<nav class="related-products" aria-label="İlgili ürünler"><h2>İlgili ürünler</h2>${related.map(p=>`<a href="/urunler/${p.slug}/">${esc(p.title)} <span aria-hidden="true">→</span></a>`).join('')}</nav>`:''}`;
 }
 
 export function productGallery(product) {
@@ -41,5 +47,5 @@ export function materialStudy() {
 }
 
 export function depotSection() {
-  return `<section class="section depot-section"><div class="wrap depot-layout"><div class="depot-photo">${catalogPhoto('ahsap-urun-deposu', { sizes: '(max-width:760px) calc(100vw - 40px), 58vw' })}<span>AHŞAP ÜRÜNLERİ / TEDARİK</span></div><div class="depot-copy"><span class="eyebrow"><span class="dot"></span> ÜRÜNDEN TESLİMATA</span><h2>İhtiyaç belli.<br>Plan net.</h2><p>Levha, kereste veya kalıp kirişi. Ürün seçimini miktar, teslimat yeri ve kullanım koşullarıyla birlikte ele alıyoruz.</p><ul><li>Ürün ve ölçülerin netleştirilmesi</li><li>Miktara göre teklif hazırlanması</li><li>Teslimat ve indirme koşullarının planlanması</li></ul><a class="text-link" href="/teklif/">İhtiyacınızı paylaşın <span aria-hidden="true">↗</span></a></div></div></section>`;
+  return `<section class="section depot-section"><div class="wrap depot-layout"><div class="depot-photo">${catalogPhoto('ahsap-urun-deposu', { sizes: '(max-width:760px) calc(100vw - 40px), 58vw' })}<span>AHŞAP ÜRÜNLERİ / TEDARİK</span></div><div class="depot-copy"><span class="eyebrow"><span class="dot"></span> ÜRÜNDEN TESLİMATA</span><h2>İhtiyaç belli.<br>Plan net.</h2><p>Ahşap ürünleri, duvar malzemeleri veya çatı kaplaması. Ürün seçimini miktar, teslimat yeri ve kullanım koşullarıyla birlikte ele alıyoruz.</p><ul><li>Ürün ve ölçülerin netleştirilmesi</li><li>Miktara göre teklif hazırlanması</li><li>Teslimat ve indirme koşullarının planlanması</li></ul><a class="text-link" href="/teklif/">İhtiyacınızı paylaşın <span aria-hidden="true">↗</span></a></div></div></section>`;
 }

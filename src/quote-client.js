@@ -7,12 +7,15 @@ export function initQuote({config,track}){
  phone.addEventListener('input',validatePhone);
  const params=new URLSearchParams(location.search);
  for(const [param,field]of [['urun','product'],['miktar','quantity'],['birim','unit'],['kalinlik','thickness']])if(params.get(param))form.elements[field].value=params.get(param);
- if(params.get('ebat'))form.elements.details.value=`Levha ölçüsü: ${params.get('ebat')} mm`;
+ const initialDetails=[];
+ if(params.get('ebat'))initialDetails.push(`Levha ölçüsü: ${params.get('ebat').slice(0,100)} mm`);
+ if(params.get('secenek'))initialDetails.push(`Ürün seçeneği: ${params.get('secenek').slice(0,150)}`);
+ form.elements.details.value=initialDetails.join('\n');
  const invalidate=()=>{if(sending)return;requestId=crypto.randomUUID();payload=null;quoteText='';$('#quote-result').hidden=true;$('#quote-preview').textContent='';$('#quote-result-status').textContent='';$('#copy-quote').textContent='Özeti kopyalayın';$('#send-whatsapp')?.removeAttribute('href');$('#send-email')?.removeAttribute('href');button.textContent='Talebimi gönderin →';};
  form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);
  function makeSummary(data){
   const product=form.elements.product.selectedOptions[0].textContent;
-  return `YAPI MALZEMECİM — TEKLİF TALEBİ\n\nAd Soyad: ${data.name}\nFirma: ${data.company||'Belirtilmedi'}\nTelefon: ${data.phone}\nE-posta: ${data.email||'Belirtilmedi'}\n\nÜrün: ${product}\nKalınlık / Kesit: ${data.thickness||'Birlikte netleştirilecek'}\nMiktar: ${data.quantity} ${data.unit}\nTeslimat şehri: ${data.city}\n\nProje detayları:\n${data.details||'Belirtilmedi'}\n\nBu dosya bir talep özetidir. Sipariş veya fiyat taahhüdü değildir.`;
+  return `YAPI MALZEMECİM — TEKLİF TALEBİ\n\nAd Soyad: ${data.name}\nFirma: ${data.company||'Belirtilmedi'}\nTelefon: ${data.phone}\nE-posta: ${data.email||'Belirtilmedi'}\n\nÜrün: ${product}\nÖlçü / Kalınlık / Kesit / Boy: ${data.thickness||'Birlikte netleştirilecek'}\nMiktar: ${data.quantity} ${data.unit}\nTeslimat şehri: ${data.city}\n\nProje detayları:\n${data.details||'Belirtilmedi'}\n\nBu dosya bir talep özetidir. Sipariş veya fiyat taahhüdü değildir.`;
  }
  function showSummary(message){
   $('#quote-preview').textContent=quoteText;$('#quote-result-status').textContent=message;$('#quote-result').hidden=false;

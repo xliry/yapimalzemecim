@@ -1,6 +1,6 @@
 const $=s=>document.querySelector(s);
 const labels={new:'Yeni',contacted:'Görüşüldü',quoted:'Teklif verildi',closed:'Tamamlandı'};
-const products={plywood:'Filmli Plywood',kontrplak:'Ham Kontrplak',osb:'OSB Levha',kereste:'İnşaatlık Kereste','ahsap-kalip-kirisi':'Ahşap Kalıp Kirişi',diger:'Diğer / Kararlaştırılacak'};
+const products={plywood:'Filmli Plywood',kontrplak:'Ham Kontrplak',osb:'OSB Levha',kereste:'İnşaatlık Kereste','ahsap-kalip-kirisi':'Ahşap Kalıp Kirişi','bims-blok-20':'20’lik Bims Blok','bims-blok-24':'24’lük Bims Blok','bims-blok-25':'25’lik Bims Blok','delikli-tugla':'Delikli Tuğla','kiremit-cati-aksesuarlari':'Kiremit ve Çatı Aksesuarları',diger:'Diğer / Kararlaştırılacak'};
 let key='',quotes=[],cursor=null,busy=false;
 let authMode='key';
 fetch('/api/runtime',{cache:'no-store'}).then(r=>r.json()).then(runtime=>{authMode=runtime.adminAuth;if(authMode==='chatgpt-and-key'){$('#admin-chatgpt-login').hidden=false;$('#admin-auth-description').textContent='Bu ekran için ChatGPT oturumu ve yönetim anahtarı gerekir. Anahtar yalnızca bu sekmenin belleğinde tutulur.';}}).catch(()=>{});

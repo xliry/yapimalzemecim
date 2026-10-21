@@ -1,3 +1,5 @@
+import { masonryProducts } from './masonry-products.mjs';
+
 export const products = [
   {
     slug: 'plywood',
@@ -119,6 +121,7 @@ export const products = [
       { q: 'Farklı kirişler aynı kalıp sisteminde birlikte kullanılabilir mi?', a: 'Ürünlerin boyu, kesiti, bağlantı ayrıntıları ve teknik değerleri sistem kapsamında kontrol edilmelidir. Alternatif ürün talebinde mevcut kirişin ürün kodunu veya teknik föyünü paylaşın; sistem uyumunu proje ve üretici bilgileriyle değerlendirin.' },
     ],
   },
+  ...masonryProducts,
 ];
 
 export const articles = [

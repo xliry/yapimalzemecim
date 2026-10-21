@@ -26,7 +26,7 @@ try {
     const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(origin, { waitUntil: 'networkidle' });
-    for (const [group, count] of [['all', 5], ['kalip', 2], ['panel', 2], ['kereste', 1]]) {
+    for (const [group, count] of ['all', ...new Set(products.map(p=>p.group))].map(group=>[group,group==='all'?products.length:products.filter(p=>p.group===group).length])) {
       await page.locator(`[data-filter="${group}"]`).click();
       assert.equal(await page.locator('.product-card:visible').count(), count);
     }
@@ -56,31 +56,57 @@ try {
     await page.close();
   }
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
-  await page.goto(origin + '/urunler/ahsap-kalip-kirisi/', { waitUntil: 'networkidle' });
+  await page.goto(origin + '/urunler/bims-blok-25/', { waitUntil: 'networkidle' });
   await page.locator('.detail-copy a.button').click();
-  assert.equal(await page.locator('[name=product]').inputValue(), 'ahsap-kalip-kirisi');
-  for (const [field, value] of Object.entries({ name: 'Katalog Akış Testi', company: 'TEST', phone: '05000000000', thickness: '3 m — 20 adet', quantity: '20', city: 'Test', details: 'Otomatik yerel test; ticari talep değildir.' })) await page.locator(`#quote-form [name="${field}"]`).fill(value);
+  assert.equal(await page.locator('[name=product]').inputValue(), 'bims-blok-25');
+  for (const [field, value] of Object.entries({ name: 'Katalog Akış Testi', company: 'TEST', phone: '05000000000', thickness: '25’lik — 9 BB 25', quantity: '20', city: 'Test', details: 'Otomatik yerel test; ticari talep değildir.' })) await page.locator(`#quote-form [name="${field}"]`).fill(value);
   await page.locator('[name=consent]').check();
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => document.querySelector('#quote-result h3')?.textContent === 'Talebiniz alındı.');
   const summary = await page.locator('#quote-preview').innerText();
-  assert(summary.includes('Ahşap Kalıp Kirişi'));
+  assert(summary.includes('25’lik Bims Blok'));
   reference = summary.match(/YM-[A-Z0-9]+/)?.[0]; assert(reference);
   const whatsapp = new URL(await page.locator('#send-whatsapp').getAttribute('href'));
-  assert(whatsapp.searchParams.get('text').includes('Ahşap Kalıp Kirişi'));
+  assert(whatsapp.searchParams.get('text').includes('25’lik Bims Blok'));
   const auth = { Authorization: `Bearer ${adminKey}` };
   const saved = (await (await fetch(origin + '/api/admin/quotes', { headers: auth })).json()).quotes.find(q => q.reference === reference);
-  assert.equal(saved.product, 'ahsap-kalip-kirisi'); assert.equal(saved.quantity, 20);
+  assert.equal(saved.product, 'bims-blok-25'); assert.equal(saved.quantity, 20);
   await page.goto(origin + '/yonetim/', { waitUntil: 'networkidle' });
   await page.locator('#admin-key').fill(adminKey);
   await page.locator('#admin-login button').click();
   const row = page.locator('.admin-lead').filter({ hasText: reference });
-  await row.waitFor(); assert((await row.innerText()).includes('Ahşap Kalıp Kirişi'));
+  await row.waitFor(); assert((await row.innerText()).includes('25’lik Bims Blok'));
   await row.locator('select').selectOption('contacted');
   await page.waitForFunction(ref => document.querySelector('#admin-status').textContent.includes(ref + ' durumu güncellendi.'), reference);
   const updated = (await (await fetch(origin + '/api/admin/quotes', { headers: auth })).json()).quotes.find(q => q.reference === reference);
   assert.equal(updated.status, 'contacted');
-  record('Beam product → prefilled quote → real SQLite record → WhatsApp summary → admin label and status');
+  record('Bims product → prefilled quote → real SQLite record → WhatsApp summary → admin label and status');
+  for(const slug of ['bims-blok-20','bims-blok-24','delikli-tugla','kiremit-cati-aksesuarlari']){
+    const product=products.find(p=>p.slug===slug);
+    await page.goto(origin+'/urunler/'+slug+'/',{waitUntil:'networkidle'});
+    if(product.options){
+      for(const option of product.options){
+        const link=page.locator('.product-choices a').filter({hasText:option});
+        const href=await link.getAttribute('href');
+        await page.goto(origin+href,{waitUntil:'networkidle'});
+        assert((await page.locator('[name=details]').inputValue()).includes(option));
+        await page.goBack({waitUntil:'networkidle'});
+      }
+      await page.locator('.product-choices a').filter({hasText:'Metal kiremit'}).click();
+    }else await page.locator('.detail-copy a.button').click();
+    assert.equal(await page.locator('[name=product]').inputValue(),slug);
+    for(const [field,value]of Object.entries({name:'Yeni Ürün Testi',phone:'05000000000',quantity:'20',city:'Test'}))await page.locator('#quote-form [name="'+field+'"]').fill(value);
+    await page.locator('[name=consent]').check();await page.locator('#quote-form button[type=submit]').click();
+    await page.waitForFunction(()=>document.querySelector('#quote-result h3')?.textContent==='Talebiniz alındı.');
+    const text=await page.locator('#quote-preview').innerText();assert(text.includes(product.title));
+    if(product.options)assert(text.includes('Metal kiremit'));
+    const data=await(await fetch(origin+'/api/admin/quotes',{headers:auth})).json();
+    const entry=data.quotes.find(q=>q.product===slug);assert(entry);
+    if(product.options)assert(entry.details.includes('Metal kiremit'));
+    await page.goto(origin+'/yonetim/',{waitUntil:'networkidle'});await page.locator('#admin-key').fill(adminKey);await page.locator('#admin-login button').click();
+    const row=page.locator('.admin-lead').filter({hasText:entry.reference});await row.waitFor();assert((await row.innerText()).includes(product.title));
+    record(slug+': product selection, real record and admin label');
+  }
   assert.deepEqual(errors, []);
 } finally {
   await browser?.close();

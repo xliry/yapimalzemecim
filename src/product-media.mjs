@@ -127,7 +127,52 @@ export const productMedia = {
     "alt": "Ahşap levha ve kereste paketlerinin bulunduğu ürün deposu",
     "position": "50% 50%",
     "cardPosition": "50% 50%"
-  }
+  },
+  "bims-blok-25": {
+  "source": "public/assets/catalog/bims-blok-25.jpg",
+  "width": 1320,
+  "height": 1278,
+  "alt": "9 BB 25 kodlu 25’lik boşluklu bims blok",
+  "position": "50% 50%",
+  "cardPosition": "50% 50%",
+  "fit": "contain"
+},
+  "bims-blok-20": {
+  "source": "public/assets/catalog/bims-blok-20.jpg",
+  "width": 1320,
+  "height": 1360,
+  "alt": "9 BB 20 kodlu 20’lik boşluklu bims blok",
+  "position": "50% 50%",
+  "cardPosition": "50% 50%",
+  "fit": "contain"
+},
+  "delikli-tugla": {
+  "source": "public/assets/catalog/delikli-tugla.jpg",
+  "width": 1320,
+  "height": 1148,
+  "alt": "Kırmızı renkli delikli duvar tuğlası",
+  "position": "50% 50%",
+  "cardPosition": "50% 50%",
+  "fit": "contain"
+},
+  "kiremit-cati-aksesuarlari": {
+  "source": "public/assets/catalog/kiremit-cati-aksesuarlari.jpg",
+  "width": 1320,
+  "height": 1437,
+  "alt": "Kil, beton ve metal kiremitlerle çatı aksesuarları ürün grupları",
+  "position": "50% 50%",
+  "cardPosition": "50% 50%",
+  "fit": "contain"
+},
+  "bims-blok-24": {
+  "source": "public/assets/catalog/bims-blok-24.jpg",
+  "width": 1320,
+  "height": 1287,
+  "alt": "9 BB 24 kodlu 24’lük boşluklu bims blok",
+  "position": "50% 50%",
+  "cardPosition": "50% 50%",
+  "fit": "contain"
+}
 };
 
 export function photoWidths(name) {
