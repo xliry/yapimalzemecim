@@ -4,7 +4,7 @@ export default {
   phone: '+905443308046',
   whatsapp: '905443308046',
   email: '',
-  address: '',
+  address: 'Hadımköy Yolu Caddesi No: 88',
   serviceRegions: [],
   // İletişim bilgileri doğrulandıktan sonra doldurun. Kimlikler girilmeden takip kodu yüklenmez.
   googleTagId: '',

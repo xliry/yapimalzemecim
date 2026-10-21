@@ -137,3 +137,5 @@
 .product-image:has(img[style*="object-fit:contain"]) .product-tag{position:relative;top:auto;left:auto;display:table;margin:0;transform:translateY(-100%);background:var(--paper)}
 .product-stage:has(img[style*="object-fit:contain"]){background:white}
 @media(max-width:360px){.product-choices>div{grid-template-columns:1fr}}
+
+.business-address{font-style:normal;font-size:12px;line-height:1.8;margin-top:20px;overflow-wrap:anywhere}.business-address strong{font-weight:700;color:var(--ink)}
